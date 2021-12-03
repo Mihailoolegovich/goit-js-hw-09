@@ -1,14 +1,22 @@
-// Описан в документации
 import flatpickr from 'flatpickr';
-// Дополнительный импорт стилей
 import 'flatpickr/dist/flatpickr.min.css';
-// import Notiflix from 'notiflix';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
-const timeStartBtn = document.querySelector('[data-start]');
-timeStartBtn.disabled = true;
+const refs = {
+  timeStartBtn: document.querySelector('[data-start]'),
+  inputData: document.querySelector('#datetime-picker'),
+  timeDays: document.querySelector('[data-days]'),
+  timeHours: document.querySelector('[data-hours]'),
+  timeMinutes: document.querySelector('[data-minutes]'),
+  timeSeconds: document.querySelector('[data-seconds]'),
+};
 
-const inputData = document.querySelector('#datetime-picker');
+refs.timeStartBtn.addEventListener('click', startTime);
+refs.timeStartBtn.disabled = true;
+
+let selectedInput = null;
+let differensData = null;
+const dateNow = Date.now();
 
 const options = {
   enableTime: true,
@@ -16,73 +24,77 @@ const options = {
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    if (fp.now.getTime() > selectedDates[0].getTime()) {
-        Notify.failure('Please choose a date in the future');
-    //   window.alert('Please choose a date in the future');
+    selectedInput = selectedDates[0].getTime();
+
+    if (fp.now.getTime() > selectedInput) {
+      refs.timeStartBtn.disabled = true;
+      Notify.failure('Please choose a date in the future');
+      // window.alert('Please choose a date in the future');
+      return;
     }
-    timeStartBtn.disabled = false;
+
+    refs.timeStartBtn.disabled = false;
+
+    differensData = selectedInput - dateNow;
+    addTimeFormat(differensData);
   },
 };
 
-const fp = flatpickr(inputData, options);
-
-// перевести дані з інпута в спани 
-// зробити ітерацію до нуля 
-
-const timeDays = document.querySelector('[data-days]');
-const timeHours = document.querySelector('[data-hours]');
-const timeMinutes = document.querySelector('[data-minutes]');
-const timeSeconds = document.querySelector('[data-seconds]');
-
-timeStartBtn.addEventListener('click', startTime);
-// () => {
-//     console.log("convertMs" , convertMs(inputData.value));
-//     console.log('inputData.value', inputData.value);
-//     // console.log('dataInconvert', callback(inputData));
-// })
+const fp = flatpickr(refs.inputData, options);
 
 function startTime() {
-  console.log('convertMs', convertMs(inputData.value));
-  console.log('inputData.value', inputData.value);
-  const inputInform = convertMs(inputData.value);
-  // inputInform.join("");
-  // console.log('inputData.value', inputInform.days);
+  refs.timeStartBtn.disabled = true;
 
-  console.log('objeckt', Object.values(inputInform));
-  // inputInform.forEach(({days, hours, minutes, seconds}) => {
-  //     console.log('seconds', seconds);
-  //     console.log('minutes', minutes);
-  //     console.log('hours', hours);
-  //     console.log('days', days);
+  differensData = selectedInput - dateNow;
+  let el = 0;
 
-  // });
-  console.log('inputInform', inputInform);
+  const addInterval = setInterval(() => {
+    if (differensData < 999) {
+      getAlertFinish(el);
+      el += 1;
+      refs.inputData.disabled = false;
+      clearInterval(addInterval);
+      return;
+    }
 
-  // timeDays.textContent =
+    differensData -= 1000;
+
+    addTimeFormat(differensData);
+
+    refs.inputData.disabled = true;
+  }, 1000);
 }
 
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// Для подсчета значений используй готовую функцию convertMs, где ms - разница между конечной и текущей датой в миллисекундах.
+function getAlertFinish(el) {
+  if (el === 0) {
+    Notify.success('Your timecode has finished');
+  }
+  return;
+}
+
+function addLeadingZero(value) {
+  return String(value).padStart(2, '0');
+}
+
+function addTimeFormat(numUTC) {
+  const numSetInt = convertMs(numUTC);
+
+  refs.timeDays.textContent = addLeadingZero(numSetInt.days);
+  refs.timeHours.textContent = addLeadingZero(numSetInt.hours);
+  refs.timeMinutes.textContent = addLeadingZero(numSetInt.minutes);
+  refs.timeSeconds.textContent = addLeadingZero(numSetInt.seconds);
+}
+
 function convertMs(ms) {
-  // Number of milliseconds per unit of time
   const second = 1000;
   const minute = second * 60;
   const hour = minute * 60;
   const day = hour * 24;
 
-  // Remaining days
   const days = Math.floor(ms / day);
-  // Remaining hours
   const hours = Math.floor((ms % day) / hour);
-  // Remaining minutes
   const minutes = Math.floor(((ms % day) % hour) / minute);
-  // Remaining seconds
   const seconds = Math.floor((((ms % day) % hour) % minute) / second);
 
   return { days, hours, minutes, seconds };
 }
-
-// console.log(convertMs(2000)); // {days: 0, hours: 0, minutes: 0, seconds: 2}
-// console.log(convertMs(140000)); // {days: 0, hours: 0, minutes: 2, seconds: 20}
-// console.log(convertMs(24140000)); // {days: 0, hours: 6 minutes: 42, seconds: 20}
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
