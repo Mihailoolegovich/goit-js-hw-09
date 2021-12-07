@@ -15,7 +15,7 @@ function getPopup(event) {
   let numInstep = Number(refs.stepDelay.value);
   let numInAmount = Number(refs.amount.value);
 
-  for (let i = 1, d = numInfirst; i < numInAmount + 1; i++, d += numInstep) {
+  for (let i = 1, d = numInfirst; i <= numInAmount ; i++, d += numInstep) {
     createPromise(i, d)
       .then(({ position, delay }) => {
         Notify.success(`✅ Fulfilled promise ${position} in ${delay}ms`);
